@@ -1,4 +1,4 @@
-import { Graph, Dom } from "@antv/x6";
+import { Graph, Dom, Shape } from "@antv/x6";
 
 export const FlowChartRect = Graph.registerNode("flow-chart-rect", {
   inherit: "rect",

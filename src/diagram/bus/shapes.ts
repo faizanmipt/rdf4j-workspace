@@ -1,4 +1,4 @@
-import { Node, Shape } from "@antv/x6";
+import { Node, Shape, Graph, Dom } from "@antv/x6";
 
 export class Bus extends Shape.Edge {
   static create1(x: number, label: string, color: string) {
@@ -298,4 +298,113 @@ Aux.config({
       stroke: "#333333",
     },
   },
+});
+
+export class EditNode extends Node {
+  // 省略实现细节
+  static create1(x: number, y: number) {
+    return new EditNode({
+      position: { x, y },
+    });
+  }
+}
+EditNode.config({
+  zIndex: 1,
+  inherit: "flow-chart-rect",
+  width: 120,
+  height: 60,
+  attrs: {
+    //   label: {
+    //     fontFamily: "monospace",
+    //     fontWeight: "bold",
+    //     fontSize: 15,
+    //     textWrap: {
+    //       width: -20,
+    //     },
+    //   },
+    body: {
+      stroke: "#ea6b66",
+      strokeWidth: 2,
+      fill: "#ffcc99",
+      refPoints: "60,20 80,60 60,100 40,60",
+    },
+    //   fo: {
+    //     refWidth: "100%",
+    //     refHeight: "100%",
+    //   },
+    content: {
+      contenteditable: "true",
+      class: "x6-edit-text",
+      style: {
+        width: "100%",
+        textAlign: "center",
+        color: "#000000",
+        fontFamily: "monospace",
+        fontWeight: "bold",
+        fontSize: 15,
+        textWrap: {
+          width: -20,
+        },
+      },
+    },
+  },
+  markup: [
+    {
+      tagName: "rect",
+      selector: "body",
+    },
+    {
+      tagName: "foreignObject",
+      selector: "fo",
+      children: [
+        {
+          ns: Dom.ns.xhtml,
+          tagName: "body",
+          selector: "foBody",
+          attrs: {
+            xmlns: Dom.ns.xhtml,
+          },
+          style: {
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          },
+          children: [
+            {
+              tagName: "div",
+              selector: "content",
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  // portMarkup: [
+  //   {
+  //     tagName: "rect",
+  //     selector: "portBody",
+  //     attrs: {
+  //       fill: "#ffffff",
+  //       stroke: "#333333",
+  //       "stroke-width": 2,
+  //       x: -10,
+  //       y: -5,
+  //       width: 20,
+  //       height: 10,
+  //     },
+  //   },
+  // ],
+  // ports: {
+  //   groups: {
+  //     in: {
+  //       position: "left",
+  //     },
+  //     out: {
+  //       position: "right",
+  //     },
+  //   },
+  // },
+  shape: "flow-chart-rect",
 });

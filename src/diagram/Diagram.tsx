@@ -1,6 +1,6 @@
 import React from "react";
 import { Graph } from "@antv/x6";
-//import { ReactShape } from '@antv/x6-react-shape';
+// import { ReactShape } from '@antv/x6-react-shape';
 
 const data = {
   // 节点

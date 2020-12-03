@@ -1,4 +1,6 @@
+import { Graph } from "@antv/x6";
 import { useState } from "react";
+import x6Editor from "../x6Editor";
 
 export function useGridAttr() {
   const [gridAttrs, setGridAttrs] = useState({
@@ -26,5 +28,19 @@ export function useGridAttr() {
   return {
     gridAttrs,
     setGridAttr,
+  };
+}
+
+export function useGlobalCells() {
+  const { graph } = x6Editor.getInstance();
+  const [globalCells, setGlobalCells] = useState(graph.getNodes());
+
+  const setCells = (graph: Graph) => {
+    setGlobalCells(graph.getNodes());
+  };
+
+  return {
+    globalCells,
+    setCells,
   };
 }

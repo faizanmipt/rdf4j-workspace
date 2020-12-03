@@ -1,8 +1,17 @@
-import { Graph, FunctionExt, Shape } from "@antv/x6";
+import { Cell, JSONArray, Markup, Model } from "@antv/x6";
+import { Graph, FunctionExt, Shape, Dom } from "@antv/x6";
 import "./shape";
-
-import { Bus, Fader, Aux, Component, Connector } from "../bus/shapes";
+import { Dnd } from "@antv/x6/es/addon/dnd";
+import { Bus, Fader, Aux, Component, Connector, EditNode } from "../bus/shapes";
 import "../bus/index.less";
+import { tagName } from "@antv/x6/lib/util/dom/elem";
+import { nodeCenter } from "@antv/x6/lib/registry/node-anchor/main";
+import { attr, mergeAttrs } from "@antv/x6/lib/util/dom/attr";
+import { Options } from "@antv/x6/lib/graph/options";
+import { config } from "process";
+import { text } from "@antv/x6/lib/util/dom/text";
+import "@antv/x6-react-shape";
+import { FlowChartRect } from "./shape";
 
 const data = {
   // 节点
@@ -124,8 +133,8 @@ export default class X6Editor {
         },
       },
       interacting: {
-        edgeMovable: false,
-        edgeLabelMovable: false,
+        edgeMovable: true,
+        edgeLabelMovable: true,
       },
       highlighting: {
         default: {
@@ -173,7 +182,7 @@ export default class X6Editor {
         modifiers: ["ctrl", "meta"],
       },
     });
-    this.initEvent();
+    // this.initEvent();
     //this._graph.fromJSON(data);
 
     var bus1 = Bus.create1(600, "Sub-group 1", "#333333");
@@ -308,6 +317,7 @@ export default class X6Editor {
       connector24,
       connector25,
     ] as any);
+    this.initEvent();
   }
 
   showPorts(ports: NodeListOf<SVGAElement>, show: boolean) {
@@ -318,18 +328,11 @@ export default class X6Editor {
 
   initEvent() {
     const { graph } = this;
+    var latestCells = graph.getCells();
+    // console.log(graph.model.getNodes())
 
-    // show or hide ports
-    this.graph.on(
-      "node:mouseenter",
-      FunctionExt.debounce(() => {
-        const ports = this.container.querySelectorAll(
-          ".x6-port-body"
-        ) as NodeListOf<SVGAElement>;
-        this.showPorts(ports, true);
-      }),
-      500
-    );
+    // this.listAllNodes(graph)
+
     graph.on("node:mouseleave", () => {
       const ports = this.container.querySelectorAll(
         ".x6-port-body"
@@ -337,15 +340,111 @@ export default class X6Editor {
       this.showPorts(ports, false);
     });
 
+    // graph.on('node:unselected', () => {
+    //   graph.resetCells(latestCells)
+    // })
+
+    graph.on(
+      "node:dblclick",
+      (args: { cell: Cell; node: Node; options: Model.SetOptions }) => {
+        const node = graph.getSelectedCells();
+        const nodeConnectors = graph.getConnectedEdges(node[0]);
+        const allCells = graph.getCells();
+        const nodeInt = JSON.parse(JSON.stringify(node[0]));
+
+        var newNodeAttrs = {
+          body: {
+            strokeWidth: 2,
+            stroke: "#cccccc",
+          },
+          fo: {
+            refWidth: "100%",
+            refHeight: "100%",
+          },
+          label: {
+            fontFamily: "monospace",
+            fontWeight: "bold",
+            fontSize: 15,
+          },
+          content: {
+            contenteditable: "true",
+            class: "x6-edit-text",
+            html:
+              typeof nodeInt["attrs"] != "undefined"
+                ? nodeInt["attrs"]["label"]["textWrap"]["text"]
+                : "",
+            style: {
+              width: "100%",
+              textAlign: "center",
+              color: "#000000",
+              fontFamily: "monospace",
+              fontWeight: "bold",
+              fontSize: 15,
+              textWrap: {
+                width: -20,
+              },
+            },
+          },
+        };
+
+        const newRect = new Shape.Rect(nodeInt);
+        newRect
+          .setMarkup([
+            {
+              tagName: "rect",
+              selector: "body",
+            },
+            {
+              tagName: "foreignObject",
+              selector: "fo",
+              children: [
+                {
+                  ns: Dom.ns.xhtml,
+                  tagName: "body",
+                  selector: "foBody",
+                  attrs: {
+                    xmlns: Dom.ns.xhtml,
+                  },
+                  style: {
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                  children: [
+                    {
+                      tagName: "div",
+                      selector: "content",
+                    },
+                  ],
+                },
+              ],
+            },
+          ])
+          .attr(newNodeAttrs);
+
+        const nn = graph.addNode(newRect);
+        graph.removeNode(node[0]["id"]);
+        graph.addCell(nn);
+        nodeConnectors.forEach((connector) => {
+          console.log(connector);
+          const edge = new Shape.Edge(JSON.parse(JSON.stringify(connector)));
+          graph.addEdge(edge);
+          graph.addCell(edge);
+        });
+      }
+    );
+
     // keyboard
-    graph.bindKey("meta+c", () => {
+    graph.bindKey("ctrl+c", () => {
       const cells = graph.getSelectedCells();
       if (cells.length) {
         graph.copy(cells);
       }
       return false;
     });
-    graph.bindKey("meta+v", () => {
+    graph.bindKey("ctrl+v", () => {
       if (!graph.isClipboardEmpty()) {
         const cells = graph.paste({ offset: 32 });
         graph.cleanSelection();
@@ -353,7 +452,7 @@ export default class X6Editor {
       }
       return false;
     });
-    graph.bindKey("meta+x", () => {
+    graph.bindKey("ctrl+x", () => {
       const cells = graph.getSelectedCells();
       if (cells.length) {
         graph.cut(cells);

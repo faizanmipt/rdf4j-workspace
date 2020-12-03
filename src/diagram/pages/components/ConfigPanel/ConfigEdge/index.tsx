@@ -28,7 +28,6 @@ export default function (props: IProps) {
     text: "",
   });
   const cellRef = useRef<Cell>();
-
   useEffect(() => {
     if (id) {
       const { graph } = X6Editor.getInstance();
