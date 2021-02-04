@@ -37,18 +37,18 @@ export default function () {
         <Header />
       </div>*/}
       <div className={styles.content}>
-        <div className={styles.sider}>
+        {/* <div className={styles.sider}>
           <Sider />
-        </div>
+        </div> */}
         <div className={styles.panel}>
-          <div className={styles.toolbar}>
+          {/* <div className={styles.toolbar}>
             <ToolBar />
-          </div>
+          </div> */}
           <div id="container" className="x6-graph" />
         </div>
-        <div className={styles.config}>
+        {/* <div className={styles.config}>
           <ConfigPanel />
-        </div>
+        </div> */}
       </div>
     </div>
   );
