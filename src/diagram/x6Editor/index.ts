@@ -12,7 +12,7 @@ import { config } from "process";
 import { text } from "@antv/x6/lib/util/dom/text";
 import "@antv/x6-react-shape";
 import { FlowChartRect } from "./shape";
-import { RedditCircleFilled } from "@ant-design/icons";
+import { IdcardFilled, RedditCircleFilled } from "@ant-design/icons";
 import { randomInt } from "crypto";
 import { Text } from "@antv/x6/lib/shape/basic";
 import { Config } from "@testing-library/react";
@@ -50,6 +50,150 @@ const data = {
     },
   ],
 };
+
+interface personList {
+  "@id": string;
+  "@type": string;
+  name: string;
+  "foaf:homepage": string;
+  depiction: string;
+  knows: string[];
+}
+
+interface personRepresentation {
+  "@id": string;
+  "@type": string;
+  x: number;
+  y: number;
+  ref: string;
+  nodeParameters: any;
+  edgeParameters: any;
+}
+
+//Domain model
+const newData = [
+  {
+    "@id": "#bob",
+    "@type": "foaf:Person",
+    name: "Bob Benson",
+    "foaf:homepage": "http://personal.example.org",
+    depiction: "http://icon.example.org/1",
+    knows: ["#alice", "#mark"],
+  },
+  {
+    "@id": "#alice",
+    "@type": "foaf:Person",
+    name: "Alice Cooper",
+    "foaf:homepage": "http://personal.example.org",
+    depiction: "http://icon.example.org/2",
+    knows: ["#bob"],
+  },
+  {
+    "@id": "#mark",
+    "@type": "foaf:Person",
+    name: "Mark Taylor",
+    "foaf:homepage": "http://personal.example.org",
+    depiction: "http://icon.example.org/3",
+    knows: ["#mark"],
+  },
+];
+
+//Representation model
+const representation = [
+  {
+    "@id": "",
+    "@type": "MyNode",
+    x: 500,
+    y: 5,
+    ref: "#bob",
+    nodeParameters: {
+      width: 250,
+      height: 70,
+    },
+    edgeParameters: {
+      shape: "custom-edge-label",
+      attrs: {
+        line: {
+          stroke: "#ccc",
+        },
+      },
+      labels: [
+        {
+          attrs: {
+            line: {
+              stroke: "#73d13d",
+            },
+            text: {
+              text: "related to",
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    "@id": "",
+    "@type": "MyNode",
+    x: 800,
+    y: 10,
+    ref: "#alice",
+    nodeParameters: {
+      width: 250,
+      height: 70,
+    },
+    edgeParameters: {
+      shape: "custom-edge-label",
+      attrs: {
+        line: {
+          stroke: "#ccc",
+        },
+      },
+      labels: [
+        {
+          attrs: {
+            line: {
+              stroke: "#73d13d",
+            },
+            text: {
+              text: "related to",
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
+    "@id": "",
+    "@type": "MyNode",
+    x: 1000,
+    y: 15,
+    ref: "#mark",
+    nodeParameters: {
+      width: 250,
+      height: 70,
+    },
+    edgeParameters: {
+      shape: "custom-edge-label",
+      attrs: {
+        line: {
+          stroke: "#ccc",
+        },
+      },
+      labels: [
+        {
+          attrs: {
+            line: {
+              stroke: "#73d13d",
+            },
+            text: {
+              text: "related to",
+            },
+          },
+        },
+      ],
+    },
+  },
+];
 
 export default class X6Editor {
   private static instance: X6Editor;
@@ -125,75 +269,65 @@ export default class X6Editor {
     return graphConfig;
   }
 
-  public static setNodes(current: Graph) {
-    const node1 = current.addNode(
-      new MyShape().resize(250, 70).position(200, 100)
-    );
-    var x = 1400;
-    var y = 5;
-    const relatives = [
-      "Company A",
-      "Mr. Dmitri",
-      "Mr. Henry",
-      "Company B",
-      "Food Store",
-      "Pyatrochka",
-      "Miratorg",
-      "Mr. Daniel",
-      "Mr. Alexey",
-      "MIPT",
-      "Moscow",
-      "Mr. Louis",
-      "Company C",
-      "Dolgoprudny",
-      "MIPT Dormitory",
-      "Mr. Alexander",
-      "Mr. Ilya",
-      "Mr. Raechel",
-      "Mr. Mendeleev",
-      "Mr. Kornaev",
-    ];
-
-    for (let index = 0; index < relatives.length; index++) {
-      const node2 = current.addNode(
+  public static setNodes(
+    current: Graph,
+    personData: personList[],
+    personRepresentation: personRepresentation[]
+  ) {
+    personData.forEach((person) => {
+      const personRep = personRepresentation.filter(
+        (rep) => rep.ref === person["@id"]
+      )[0];
+      const x = personRep.x;
+      const y = personRep.y;
+      const name = person.name;
+      const ref = person["@id"];
+      const params = personRep.nodeParameters;
+      const node = current.addNode(
         new MyShape()
-          .resize(250, 70)
+          .resize(params.width, params.height)
           .position(x, y)
-          .updateText(current, relatives[index])
+          .updateText(current, name)
+          .updateBoxId(current, ref)
       );
-      const num = [node1, node2];
-      const randomElement1 = num[Math.floor(Math.random() * num.length)];
-      var randomElement2;
-      if (randomElement1 == node1) randomElement2 = node2;
-      else randomElement2 = node1;
-      X6Editor.link(randomElement1, randomElement2, current);
-      y = y + 40;
-      x = x - 55;
-    }
+    });
   }
 
-  public static link(source: Node, target: Node, current: Graph) {
-    return current.addEdge({
-      source: { cell: source },
-      target: { cell: target },
-      shape: "custom-edge-label",
-      attrs: {
-        line: {
-          stroke: "#ccc",
-        },
-      },
-      labels: [
-        {
+  public static link(current: Graph, personData: personList[]) {
+    const nodes: any[] = JSON.parse(JSON.stringify(current.getNodes()));
+    var targetNodeList: Node[];
+    personData.forEach((person) => {
+      const sourceNode: Node = nodes.filter(
+        (node) => node.attrs["body"]["id"] === person["@id"]
+      )[0];
+      person["knows"].forEach((connection) => {
+        console.log(connection);
+        const targetNode = nodes.filter(
+          (node) => node.attrs["body"]["id"] === connection
+        )[0];
+        return current.addEdge({
+          source: { cell: sourceNode },
+          target: { cell: targetNode },
+          shape: "custom-edge-label",
           attrs: {
             line: {
-              stroke: "#73d13d",
-            },
-            text: {
-              text: "related to",
+              stroke: "#ccc",
             },
           },
-        },
-      ],
+          labels: [
+            {
+              attrs: {
+                line: {
+                  stroke: "#73d13d",
+                },
+                text: {
+                  text: "related to",
+                },
+              },
+            },
+          ],
+        });
+      });
     });
   }
 
@@ -201,7 +335,9 @@ export default class X6Editor {
     this.container = document.getElementById("container")!;
     var graphConfig = X6Editor.graphConfiguration(this);
     this._graph = new Graph(graphConfig);
-    X6Editor.setNodes(this._graph);
+    X6Editor.setNodes(this._graph, newData, representation);
+    X6Editor.link(this._graph, newData);
+
     this.initEvent();
   }
 
@@ -341,6 +477,10 @@ export default class X6Editor {
 class MyShape extends Shape.Rect {
   updateText(graph: Graph, name: string) {
     this.updateAttrs({ textbox: { text: name } });
+    return this;
+  }
+  updateBoxId(graph: Graph, id: string) {
+    this.updateAttrs({ body: { id: id } });
     return this;
   }
 }
